@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">MyWeather!!!</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="Feb7date">February 7,2020</string>
+    <string name="Feb8date">February 8,2020</string>
+    <string name="Feb9date">February 9,2020</string>
+
+    <string name="Feb7temp">22</string>
+    <string name="Feb8temp">12</string>
+    <string name="Feb9temp">23</string>
+
+    <string name="backyard">BACKYARD</string>
+    <string name="back_patio">BACK PATIO</string>
+    <string name="front_yard">FRONT YARD</string>
+    <string name="garden">GARDEN</string>
+    <string name="porch">PORCH</string>
+</resources>
