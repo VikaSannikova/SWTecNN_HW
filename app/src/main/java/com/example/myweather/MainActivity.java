@@ -27,9 +27,10 @@ public class MainActivity  extends AppCompatActivity {
     Guideline guideline1;
     Guideline guideline2;
     WateringTimeView myview;
-    ArrayList<DayWeather> days_weather1;
-    Handler mainHandler = new Handler();
-    LoaderManager mLoaderManager;
+    int temp, humidity;
+    ArrayList<DayWeather> days_weather_from_server;
+    TextView temp_num, humidity_num;
+    protected Handler mainHandler = new Handler();
 
     Thread mThread;
     String tag = "mThread";
@@ -41,8 +42,10 @@ public class MainActivity  extends AppCompatActivity {
         setContentView(R.layout.constraint_activity_main);
         Context context = this;
         ArrayList<DayWeather> days_weather = new ArrayList<>();
-        days_weather1 = new ArrayList<>();
-        days_weather1.clear();
+        days_weather_from_server = new ArrayList<>();
+        days_weather_from_server.clear();
+        temp_num = (TextView) findViewById(R.id.temp_num);
+        humidity_num = (TextView) findViewById(R.id.humidity_num);
 
 
         days_weather.clear();
@@ -61,9 +64,13 @@ public class MainActivity  extends AppCompatActivity {
         weather_list = (RecyclerView) findViewById(R.id.weather_list);
         LinearLayoutManager llm1 = new LinearLayoutManager(this);
         weather_list.setLayoutManager(llm1);
-        MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
-        // MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather1);
-        weather_list.setAdapter(weatherAdapter);
+        mainHandler = new Handler();
+        mThread = new MyThread("tread", this);
+        mThread.start();
+
+
+        //MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
+        //weather_list.setAdapter(weatherAdapter);
 
         location_list = (RecyclerView) findViewById(R.id.location_list);
         LinearLayoutManager llm2 = new LinearLayoutManager(this);
