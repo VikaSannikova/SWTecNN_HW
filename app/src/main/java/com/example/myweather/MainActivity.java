@@ -5,6 +5,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -20,19 +21,19 @@ import java.util.ArrayList;
 
 
 public class MainActivity  extends AppCompatActivity {
-    TextView notification_button;
-    CheckBox sprinkler_button;
-    RecyclerView weather_list;
-    RecyclerView location_list;
-    Guideline guideline1;
-    Guideline guideline2;
-    WateringTimeView myview;
-    ArrayList<DayWeather> days_weather1;
-    Handler mainHandler = new Handler();
-    LoaderManager mLoaderManager;
+    private TextView notification_button;
+    private CheckBox sprinkler_button;
+    protected RecyclerView weather_list;
+    private RecyclerView location_list;
+    private Guideline guideline1;
+    private Guideline guideline2;
+    private WateringTimeView myview;
+    protected ArrayList<DayWeather> days_weather_from_server;
+    protected int temp, humidity;
+    protected TextView temp_num;
+    protected TextView humidity_num;
 
     Thread mThread;
-    String tag = "mThread";
 
     @Override
     protected void onCreate(Bundle saveInstanceState){
@@ -40,15 +41,20 @@ public class MainActivity  extends AppCompatActivity {
         getSupportActionBar().hide();
         setContentView(R.layout.constraint_activity_main);
         Context context = this;
-        ArrayList<DayWeather> days_weather = new ArrayList<>();
-        days_weather1 = new ArrayList<>();
-        days_weather1.clear();
+//        ArrayList<DayWeather> days_weather = new ArrayList<>();
+        days_weather_from_server = new ArrayList<>();
+        days_weather_from_server.clear();
 
+        mThread = new MyThread("thread", this);
+        mThread.start();
 
-        days_weather.clear();
-        days_weather.add(new DayWeather("February 7, 2022", R.drawable.cloudy, 12));
-        days_weather.add(new DayWeather("February 8, 2020", R.drawable.rain, -10));
-        days_weather.add(new DayWeather("February 9, 2020", R.drawable.partly_cloudy, 22));
+        temp_num = (TextView) findViewById(R.id.temp_num);
+        humidity_num = (TextView) findViewById(R.id.humidity_num);
+
+//        days_weather.clear();
+//        days_weather.add(new DayWeather("February 7, 2022", R.drawable.cloudy, 12));
+//        days_weather.add(new DayWeather("February 8, 2020", R.drawable.rain, -10));
+//        days_weather.add(new DayWeather("February 9, 2020", R.drawable.partly_cloudy, 22));
 
         ArrayList<Location> locations = new ArrayList<>();
         locations.clear();
@@ -61,9 +67,8 @@ public class MainActivity  extends AppCompatActivity {
         weather_list = (RecyclerView) findViewById(R.id.weather_list);
         LinearLayoutManager llm1 = new LinearLayoutManager(this);
         weather_list.setLayoutManager(llm1);
-        MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
-        // MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather1);
-        weather_list.setAdapter(weatherAdapter);
+//        MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
+//        weather_list.setAdapter(weatherAdapter);
 
         location_list = (RecyclerView) findViewById(R.id.location_list);
         LinearLayoutManager llm2 = new LinearLayoutManager(this);
@@ -114,10 +119,32 @@ public class MainActivity  extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        try {
+            mThread.interrupt();
+            Log.i("thread", "поток остановлен паузой");
+        } catch (Exception ex) {
+
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if(mThread!=null && !mThread.isInterrupted()){
+            mThread = new MyThread("thread", this);
+            mThread.start();
+            Log.i("thread", "поток заново запущен");
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            mThread.interrupt();
+            Log.i("thread", "поток остановлен дестроем");
+        } catch (Exception ex) {
+
+        }
     }
 }
