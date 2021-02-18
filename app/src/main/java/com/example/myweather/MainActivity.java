@@ -3,7 +3,6 @@ package com.example.myweather;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.format.Time;
 import android.view.View;
 import android.widget.CheckBox;
@@ -12,7 +11,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.Guideline;
-import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -27,9 +25,9 @@ public class MainActivity  extends AppCompatActivity {
     Guideline guideline1;
     Guideline guideline2;
     WateringTimeView myview;
-    ArrayList<DayWeather> days_weather1;
-    Handler mainHandler = new Handler();
-    LoaderManager mLoaderManager;
+    TextView temp_num, humidity_num;
+    ArrayList<DayWeather> days_weather_from_server;
+    MyAsyncTask myAsyncTask;
 
     Thread mThread;
     String tag = "mThread";
@@ -41,8 +39,8 @@ public class MainActivity  extends AppCompatActivity {
         setContentView(R.layout.constraint_activity_main);
         Context context = this;
         ArrayList<DayWeather> days_weather = new ArrayList<>();
-        days_weather1 = new ArrayList<>();
-        days_weather1.clear();
+        days_weather_from_server = new ArrayList<>();
+        days_weather_from_server.clear();
 
 
         days_weather.clear();
@@ -58,12 +56,16 @@ public class MainActivity  extends AppCompatActivity {
         locations.add(new Location(false, "GARDEN", true));
         locations.add(new Location(false, "PORCH", false));
 
+        temp_num = (TextView) findViewById(R.id.temp_num);
+        humidity_num = (TextView) findViewById(R.id.humidity_num);
         weather_list = (RecyclerView) findViewById(R.id.weather_list);
         LinearLayoutManager llm1 = new LinearLayoutManager(this);
         weather_list.setLayoutManager(llm1);
-        MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
+        myAsyncTask = new MyAsyncTask("async task", this);
+        myAsyncTask.execute();
+        //MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
         // MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather1);
-        weather_list.setAdapter(weatherAdapter);
+        //weather_list.setAdapter(weatherAdapter);
 
         location_list = (RecyclerView) findViewById(R.id.location_list);
         LinearLayoutManager llm2 = new LinearLayoutManager(this);
@@ -120,4 +122,76 @@ public class MainActivity  extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+//    class MyAsyncTask extends AsyncTask<Void, Void, ArrayList <DayWeather>> {
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//            Log.i("AT", "загружаем данные");
+//        }
+//
+//        @Override
+//        protected ArrayList<DayWeather> doInBackground(Void... voids) {
+//            RetrofitClient.INSTANCE.getCurrentWeather().enqueue(new Callback<CurrentWeatherForecast>() {
+//                @Override
+//                public void onResponse(Call<CurrentWeatherForecast> call, Response<CurrentWeatherForecast> response) {
+//                    int temp = (int) response.body().component2().component1();
+//                    int humidity = response.body().component2().component2();
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            temp_num.setText(String.valueOf(temp) + "°");
+//                            humidity_num.setText(String.valueOf(humidity) + "%");
+//                        }
+//                    });
+//                }
+//
+//                @Override
+//                public void onFailure(Call<CurrentWeatherForecast> call, Throwable t) {
+//                    Log.i(tag, "НЕ работает запрос текущей погоды");
+//                }
+//            });
+//            RetrofitClient.INSTANCE.getWeatherForecast().enqueue(new Callback<WeatherForecast>() {
+//                @Override
+//                public void onResponse(Call<WeatherForecast> call, Response<WeatherForecast> response) {
+//                    List<DailyForecast> days_from_server = response.body().component1();
+//                    for (DailyForecast df : days_from_server) {
+//                        days_weather_from_server.add(new DayWeather(df.getDate(), R.drawable.cloudy, (int) df.getTemp().component1()));
+//                    }
+//                    runOnUiThread(new Runnable() {
+//                                      @Override
+//                                      public void run() {
+//                                          MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(getLayoutInflater().getContext(), days_weather_from_server);
+//                                          weather_list.setAdapter(weatherAdapter);
+//                                      }
+//                                  }
+//                    );
+//                }
+//
+//                @Override
+//                public void onFailure(Call<WeatherForecast> call, Throwable t) {
+//                    Log.i(tag, "НЕ работает запрос недельно1 погоды");
+//                }
+//            });
+//            return days_weather_from_server;
+//        }
+//
+//        @Override
+//        protected void onPostExecute(ArrayList <DayWeather> list) {
+//            // пробовала так - не работает - не поняла почему
+//            // TODO задать вопрос
+//            // MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(getLayoutInflater().getContext(), days_weather_from_server);
+//            //weather_list.setAdapter(weatherAdapter);
+//            Log.i(tag, "End async task");
+//            super.onPostExecute(list);
+//
+//        }
+//    }
+
+
 }
