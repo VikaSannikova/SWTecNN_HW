@@ -1,10 +1,12 @@
 package com.example.myweather;
 
+import android.app.LoaderManager;
 import android.content.Context;
+import android.content.Loader;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -12,14 +14,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.Guideline;
-import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.myweather.api.model.CurrentWeather;
+import com.example.myweather.api.model.DailyForecast;
+import com.example.myweather.api.model.WeatherForecast;
 
 import java.util.ArrayList;
 
 
-public class MainActivity  extends AppCompatActivity {
+public class MainActivity  extends AppCompatActivity implements LoaderManager.LoaderCallbacks<WeatherForecast> {
     TextView notification_button;
     CheckBox sprinkler_button;
     RecyclerView weather_list;
@@ -27,12 +32,11 @@ public class MainActivity  extends AppCompatActivity {
     Guideline guideline1;
     Guideline guideline2;
     WateringTimeView myview;
-    ArrayList<DayWeather> days_weather1;
-    Handler mainHandler = new Handler();
-    LoaderManager mLoaderManager;
-
-    Thread mThread;
-    String tag = "mThread";
+    ArrayList<DayWeather> days_weather_from_server;
+    TextView temp_num, humidity_num;
+    LoaderManager loaderManager;
+    public static final int LOADER_CD_ID = 1;
+    public static final int LOADER_W_ID = 2;
 
     @Override
     protected void onCreate(Bundle saveInstanceState){
@@ -41,8 +45,13 @@ public class MainActivity  extends AppCompatActivity {
         setContentView(R.layout.constraint_activity_main);
         Context context = this;
         ArrayList<DayWeather> days_weather = new ArrayList<>();
-        days_weather1 = new ArrayList<>();
-        days_weather1.clear();
+        days_weather_from_server = new ArrayList<>();
+        days_weather_from_server.clear();
+        temp_num = (TextView) findViewById(R.id.temp_num);
+        humidity_num = (TextView) findViewById(R.id.humidity_num);
+
+        Bundle bundle = new Bundle();
+        getLoaderManager().initLoader(1, bundle,this).forceLoad();
 
 
         days_weather.clear();
@@ -61,9 +70,10 @@ public class MainActivity  extends AppCompatActivity {
         weather_list = (RecyclerView) findViewById(R.id.weather_list);
         LinearLayoutManager llm1 = new LinearLayoutManager(this);
         weather_list.setLayoutManager(llm1);
-        MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
+
+        // MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
         // MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather1);
-        weather_list.setAdapter(weatherAdapter);
+        // weather_list.setAdapter(weatherAdapter);
 
         location_list = (RecyclerView) findViewById(R.id.location_list);
         LinearLayoutManager llm2 = new LinearLayoutManager(this);
@@ -120,4 +130,112 @@ public class MainActivity  extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
     }
+
+    @Override
+    public Loader<WeatherForecast> onCreateLoader(int id, Bundle args) {
+        Loader<CurrentWeather> mLoader = null;
+        Loader<WeatherForecast> mwl = null;
+        // условие можно убрать, если вы используете только один загрузчик
+        if (id == LOADER_CD_ID) {
+            mLoader = new MyAsyncTaskLoaderCurrDay(this, args);
+            mwl = new MyAsyncTaskLoaderWeak(this, args);
+            Log.d("___", "onCreateLoader CurrDay");
+        }
+        //return mLoader;
+        return mwl;
+    }
+
+
+
+    @Override
+    public void onLoadFinished(Loader<WeatherForecast> loader, WeatherForecast data) {
+        Log.d("___", "load finished");
+        if (data != null){
+            for (DailyForecast df : data.getDaily()) {
+                days_weather_from_server.add(new DayWeather(df.getDate(), R.drawable.cloudy, (int) df.getTemp().component1()));
+            }
+            MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather_from_server);
+            weather_list.setAdapter(weatherAdapter);
+        }
+
+    }
+
+    @Override
+    public void onLoaderReset(Loader<WeatherForecast> loader) {
+
+    }
+
+    public void startAsyncTask(View view){
+        loaderManager.initLoader(1, null, this);
+    }
+//
+//    public class MyAsyncTaskLoader extends AsyncTaskLoader<List<DailyForecast>> {
+//
+//        public MyAsyncTaskLoader(@NonNull Context context) {
+//            super(context);
+//        }
+//
+//        @Nullable
+//        @Override
+//        public List<DailyForecast> loadInBackground() {
+//            RetrofitClient.INSTANCE.getWeatherForecast().enqueue(new Callback<WeatherForecast>() {
+//                @Override
+//                public void onResponse(Call<WeatherForecast> call, Response<WeatherForecast> response) {
+//                    List<DailyForecast> days_from_server = response.body().component1();
+//                    for (DailyForecast df : days_from_server) {
+//                        days_weather_from_server.add(new DayWeather(df.getDate(), R.drawable.cloudy, (int) df.getTemp().component1()));
+//                    }
+//                    runOnUiThread(new Runnable() {
+//                                      @Override
+//                                      public void run() {
+//                                          MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(getLayoutInflater().getContext(), days_weather_from_server);
+//                                          weather_list.setAdapter(weatherAdapter);
+//                                      }
+//                                  }
+//                    );
+//                }
+//                @Override
+//                public void onFailure(Call<WeatherForecast> call, Throwable t) {
+//
+//                }
+//            });
+//            return null;
+//        }
+//    }
+
+//    class MyLoaderCallbacks implements android.app.LoaderManager.LoaderCallbacks<List<DailyForecast>> {
+//
+//        @NonNull
+//        @Override
+//        public Loader<List<DailyForecast>> onCreateLoader(int id, @Nullable Bundle args) {
+//            return new MyAsyncTaskLoader(getLayoutInflater().getContext());
+//        }
+//
+//        @Override
+//        public void onLoadFinished(android.content.Loader<List<DailyForecast>> loader, List<DailyForecast> data) {
+//            MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(getLayoutInflater().getContext(), days_weather_from_server);
+//            weather_list.setAdapter(weatherAdapter);
+//        }
+//
+//        @Override
+//        public void onLoaderReset(android.content.Loader<List<DailyForecast>> loader) {
+//
+//        }
+//
+//    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
