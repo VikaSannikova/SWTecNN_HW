@@ -3,8 +3,8 @@ package com.example.myweather;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -12,11 +12,15 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.Guideline;
-import androidx.loader.app.LoaderManager;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.myweather.viewmodel.WeatherViewModel;
+
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity  extends AppCompatActivity {
@@ -27,12 +31,9 @@ public class MainActivity  extends AppCompatActivity {
     Guideline guideline1;
     Guideline guideline2;
     WateringTimeView myview;
-    ArrayList<DayWeather> days_weather1;
-    Handler mainHandler = new Handler();
-    LoaderManager mLoaderManager;
-
-    Thread mThread;
-    String tag = "mThread";
+    List<DayWeather> days_weather_from_server;
+    MyWeatherAdapter weatherAdapter;
+    WeatherViewModel weatherViewModel;
 
     @Override
     protected void onCreate(Bundle saveInstanceState){
@@ -41,14 +42,14 @@ public class MainActivity  extends AppCompatActivity {
         setContentView(R.layout.constraint_activity_main);
         Context context = this;
         ArrayList<DayWeather> days_weather = new ArrayList<>();
-        days_weather1 = new ArrayList<>();
-        days_weather1.clear();
+        days_weather_from_server = new ArrayList<>();
+        days_weather_from_server.clear();
 
 
         days_weather.clear();
-        days_weather.add(new DayWeather("February 7, 2022", R.drawable.cloudy, 12));
-        days_weather.add(new DayWeather("February 8, 2020", R.drawable.rain, -10));
-        days_weather.add(new DayWeather("February 9, 2020", R.drawable.partly_cloudy, 22));
+//        days_weather.add(new DayWeather("February 7, 2022", R.drawable.cloudy, 12));
+//        days_weather.add(new DayWeather("February 8, 2020", R.drawable.rain, -10));
+//        days_weather.add(new DayWeather("February 9, 2020", R.drawable.partly_cloudy, 22));
 
         ArrayList<Location> locations = new ArrayList<>();
         locations.clear();
@@ -61,9 +62,22 @@ public class MainActivity  extends AppCompatActivity {
         weather_list = (RecyclerView) findViewById(R.id.weather_list);
         LinearLayoutManager llm1 = new LinearLayoutManager(this);
         weather_list.setLayoutManager(llm1);
-        MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather);
-        // MyWeatherAdapter weatherAdapter = new MyWeatherAdapter(this, days_weather1);
+
+        weatherAdapter = new MyWeatherAdapter(this, days_weather_from_server);
         weather_list.setAdapter(weatherAdapter);
+        weatherViewModel = ViewModelProviders.of(this).get(WeatherViewModel.class);
+        weatherViewModel.getMutable_daysList().observe(this, new Observer<List<DayWeather>>() {
+            @Override
+            public void onChanged(List<DayWeather> dayWeathers) {
+                if (dayWeathers != null) {
+                    days_weather_from_server = dayWeathers;
+                    weatherAdapter.setDays(days_weather_from_server);
+                } else {
+                    Log.i("___", "NO RESULTS");
+                }
+            }
+        });
+        weatherViewModel.makeApiCall();
 
         location_list = (RecyclerView) findViewById(R.id.location_list);
         LinearLayoutManager llm2 = new LinearLayoutManager(this);

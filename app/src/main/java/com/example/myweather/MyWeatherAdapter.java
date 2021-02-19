@@ -14,11 +14,16 @@ import java.util.List;
 public class MyWeatherAdapter extends RecyclerView.Adapter<MyWeatherAdapter.ViewHolder> {
 
     private final LayoutInflater inflater;
-    private final List<DayWeather> days;
+    public List<DayWeather> days;
 
     MyWeatherAdapter(Context context, List<DayWeather> states) {
         this.days = states;
         this.inflater = LayoutInflater.from(context);
+    }
+
+    public void setDays(List<DayWeather> _days){
+        this.days = _days;
+        notifyDataSetChanged();
     }
 
 
