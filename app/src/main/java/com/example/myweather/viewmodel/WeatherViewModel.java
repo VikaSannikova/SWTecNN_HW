@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModel;
 import com.example.myweather.DayWeather;
 import com.example.myweather.R;
 import com.example.myweather.api.RetrofitClient;
+import com.example.myweather.api.model.CurrentWeather;
+import com.example.myweather.api.model.CurrentWeatherForecast;
 import com.example.myweather.api.model.DailyForecast;
 import com.example.myweather.api.model.WeatherForecast;
 
@@ -24,16 +26,20 @@ public class WeatherViewModel extends ViewModel {
 
     private LiveData<List<DayWeather>> daysList;
     private MutableLiveData<List<DayWeather>> mutable_daysList;
-    private CompositeDisposable compositeDisposable;
+    private MutableLiveData<CurrentWeather> currDay;
 
     public WeatherViewModel() {
         mutable_daysList = new MutableLiveData<>();
         daysList = mutable_daysList;
-        compositeDisposable = new CompositeDisposable();
+        currDay = new MutableLiveData<>();
     }
 
     public MutableLiveData<List<DayWeather>> getMutable_daysList() {
         return mutable_daysList;
+    }
+
+    public MutableLiveData<CurrentWeather> getCurrDay() {
+        return currDay;
     }
 
     public void makeApiCall() {
@@ -55,6 +61,20 @@ public class WeatherViewModel extends ViewModel {
             public void onError(@NonNull Throwable e) {
                 mutable_daysList.postValue(null);
                 Log.i("___", "RX onError");
+            }
+        });
+
+        RetrofitClient.INSTANCE.getCurrentWeather()
+                .subscribeOn(Schedulers.io()).subscribe(new DisposableSingleObserver<CurrentWeatherForecast>() {
+            @Override
+            public void onSuccess(@NonNull CurrentWeatherForecast currentWeatherForecast) {
+                currDay.postValue(currentWeatherForecast.getWeather());
+                Log.i("___", "RX onSuccess curr day");
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+                Log.i("___", "RX onError curr day");
             }
         });
 

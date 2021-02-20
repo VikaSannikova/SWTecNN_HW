@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.myweather.api.model.CurrentWeather;
 import com.example.myweather.viewmodel.WeatherViewModel;
 
 import java.util.ArrayList;
@@ -34,6 +35,7 @@ public class MainActivity  extends AppCompatActivity {
     List<DayWeather> days_weather_from_server;
     MyWeatherAdapter weatherAdapter;
     WeatherViewModel weatherViewModel;
+    TextView temp_num, humidity_num;
 
     @Override
     protected void onCreate(Bundle saveInstanceState){
@@ -44,9 +46,11 @@ public class MainActivity  extends AppCompatActivity {
         ArrayList<DayWeather> days_weather = new ArrayList<>();
         days_weather_from_server = new ArrayList<>();
         days_weather_from_server.clear();
+        temp_num = findViewById(R.id.temp_num);
+        humidity_num = findViewById(R.id.humidity_num);
 
 
-        days_weather.clear();
+//        days_weather.clear();
 //        days_weather.add(new DayWeather("February 7, 2022", R.drawable.cloudy, 12));
 //        days_weather.add(new DayWeather("February 8, 2020", R.drawable.rain, -10));
 //        days_weather.add(new DayWeather("February 9, 2020", R.drawable.partly_cloudy, 22));
@@ -72,6 +76,17 @@ public class MainActivity  extends AppCompatActivity {
                 if (dayWeathers != null) {
                     days_weather_from_server = dayWeathers;
                     weatherAdapter.setDays(days_weather_from_server);
+                } else {
+                    Log.i("___", "NO RESULTS");
+                }
+            }
+        });
+        weatherViewModel.getCurrDay().observe(this, new Observer<CurrentWeather>() {
+            @Override
+            public void onChanged(CurrentWeather currentWeather) {
+                if (currentWeather != null) {
+                    temp_num.setText(String.valueOf((int) currentWeather.component1())+"°");
+                    humidity_num.setText(String.valueOf(currentWeather.component2())+"%");
                 } else {
                     Log.i("___", "NO RESULTS");
                 }
